@@ -20,6 +20,19 @@ export function drag(ctrl: RoundController, e: cg.MouchEvent): void {
   dragNewPiece(ctrl.chessground.state, { color, role }, e);
 }
 
+//TODO: use chessground/api move(orig, dest)
+export function click(ctrl: RoundController, origin: cg.Key, destination: cg.Key): void {
+  if (ctrl.replaying() || !ctrl.isPlaying()) return;
+  const state = ctrl.chessground.state;
+  if (state.selected === origin) {
+    ctrl.chessground.cancelMove();
+    return;
+  }
+  if (state.selected) ctrl.chessground.selectSquare(state.selected, false);
+  ctrl.chessground.selectSquare(origin, true);
+  ctrl.chessground.move(origin, destination);
+}
+
 let dropWithKey = false;
 let dropWithDrag = false;
 let mouseIconsLoaded = false;
