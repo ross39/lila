@@ -447,13 +447,10 @@
   <string name="firstName">Pangalan</string>
   <string name="lastName">Apelyido</string>
   <string name="biography">Talambuhay</string>
-  <string name="countryOrFlag" comment="countryOrFlag&#10;Appears when you edit your profile. Lets a player add a country/flag (not all flags are for countries) to their profile">Bansa O watawat</string>
   <string name="thankYou">Salamat!</string>
   <string name="socialMediaLinks">Mga link ng social media</string>
   <string name="oneUrlPerLine">Isang URL kada linya.</string>
   <string name="inlineNotation">Nakalinyang notasyon</string>
-  <string name="savingMoves">Temporero paglipat ng imbakan</string>
-  <string name="savingMovesHelp">Palagi naming kinikeep ang iyong mga variation sa cache ng iyong browser.</string>
   <string name="makeAStudy">Para sa pag iingat at pagbabahagi, pag isipang gumawa ng pag-aaral.</string>
   <string name="clearSavedMoves">Tangalin ang mga moves</string>
   <string name="previouslyOnLichessTV">Ang Nakaraan sa Lichess TV</string>

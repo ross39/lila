@@ -1,5 +1,3 @@
-export {}; // for tsc isolatedModules
-
 lichess.load.then(() => {
   const form = document.querySelector('.search__form') as HTMLFormElement,
     $form = $(form),
@@ -21,7 +19,7 @@ lichess.load.then(() => {
       row: HTMLTableRowElement,
       rowClassName: string,
       user: string,
-      dataKey: string
+      dataKey: string,
     ): boolean => {
       const player: string = $form.data(dataKey);
       return row.classList.contains(rowClassName) && !!player.length && user == player;
@@ -40,7 +38,7 @@ lichess.load.then(() => {
               ? { selected: '' }
               : {}),
           })
-          .text(user)
+          .text(user),
       );
     }
     row.classList.toggle('none', !usernames.length);

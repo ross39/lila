@@ -462,13 +462,10 @@ analisis komputer, perbualan dalam permainan dan URL kongsi bersama.</string>
   <string name="firstName">Nama yang diberi</string>
   <string name="lastName">Nama keluarga</string>
   <string name="biography">Biografi</string>
-  <string name="countryOrFlag" comment="countryOrFlag&#10;Appears when you edit your profile. Lets a player add a country/flag (not all flags are for countries) to their profile">Negara atau bendera</string>
   <string name="thankYou">Terima kasih!</string>
   <string name="socialMediaLinks">Pautan media sosial</string>
   <string name="oneUrlPerLine">Satu URL setiap baris.</string>
   <string name="inlineNotation">Notasi dalaman</string>
-  <string name="savingMoves">Penyimpanan sementara</string>
-  <string name="savingMovesHelp">Kami sentiasa menyimpan variasi anda dalam cache pelayaran internet anda.</string>
   <string name="makeAStudy">Untuk penyimpanan dan perkongsian, pertimbangkan untuk membuat kajian pembelajaran.</string>
   <string name="activePlayers">Pemain aktif</string>
   <string name="success">Berjaya</string>

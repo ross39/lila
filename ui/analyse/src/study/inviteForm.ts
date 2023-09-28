@@ -2,7 +2,7 @@ import * as licon from 'common/licon';
 import { bind, onInsert } from 'common/snabbdom';
 import { titleNameToId } from '../view/util';
 import { h, VNode } from 'snabbdom';
-import { snabModal } from 'common/modal';
+import { snabDialog } from 'common/dialog';
 import { prop, Prop } from 'common';
 import { StudyMemberMap } from './interfaces';
 import { AnalyseSocketSend } from '../socket';
@@ -24,7 +24,7 @@ export function makeCtrl(
   members: Prop<StudyMemberMap>,
   setTab: () => void,
   redraw: () => void,
-  trans: Trans
+  trans: Trans,
 ): StudyInviteFormCtrl {
   const open = prop(false),
     spectators = prop<string[]>([]);
@@ -59,18 +59,18 @@ export function view(ctrl: ReturnType<typeof makeCtrl>): VNode {
   const candidates = [...new Set([...ctrl.spectators(), ...ctrl.previouslyInvited()])]
     .filter(s => !ctrl.members()[titleNameToId(s)]) // remove existing members
     .sort();
-  return snabModal({
+  return snabDialog({
     class: 'study__invite',
     onClose() {
       ctrl.open(false);
       ctrl.redraw();
     },
-    content: [
+    vnodes: [
       h('h2', ctrl.trans.noarg('inviteToTheStudy')),
       h(
         'p.info',
         { attrs: { 'data-icon': licon.InfoCircle } },
-        ctrl.trans.noarg('pleaseOnlyInvitePeopleYouKnow')
+        ctrl.trans.noarg('pleaseOnlyInvitePeopleYouKnow'),
       ),
       h('div.input-wrapper', [
         // because typeahead messes up with snabbdom
@@ -90,7 +90,7 @@ export function view(ctrl: ReturnType<typeof makeCtrl>): VNode {
                   ctrl.redraw();
                 },
               })
-              .then(() => input.focus())
+              .then(() => input.focus()),
           ),
         }),
       ]),
@@ -106,9 +106,9 @@ export function view(ctrl: ReturnType<typeof makeCtrl>): VNode {
                     ctrl.invite(username);
                   }),
                 },
-                username
+                username,
               );
-            })
+            }),
           )
         : undefined,
     ],

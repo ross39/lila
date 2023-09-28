@@ -18,9 +18,10 @@ import { reload } from './component/reload';
 import { requestIdleCallback } from './component/functions';
 import { userComplete } from './component/assets';
 import { siteTrans } from './component/trans';
-import { trapFocus } from 'common/modal';
 import { isIOS } from 'common/mobile';
 
+window.$as = <T>(cashOrHtml: Cash | string) =>
+  (typeof cashOrHtml === 'string' ? $(cashOrHtml) : cashOrHtml)[0] as T;
 exportLichessGlobals();
 lichess.info = info;
 
@@ -116,17 +117,6 @@ lichess.load.then(() => {
       return false;
     });
 
-    $('body').on('focusin', trapFocus);
-
-    lichess.mousetrap.bind('esc', () => {
-      const $oc = $('#modal-wrap .close');
-      if ($oc.length) $oc.trigger('click');
-      else {
-        const $input = $(':focus');
-        if ($input.length) $input.trigger('blur');
-      }
-    });
-
     /* Edge randomly fails to rasterize SVG on page load
      * A different SVG must be loaded so a new image can be rasterized */
     if (navigator.userAgent.includes('Edge/'))
@@ -165,10 +155,12 @@ lichess.load.then(() => {
       lichess.redirect(d);
     });
     pubsub.on('socket.in.fen', e =>
-      document.querySelectorAll('.mini-game-' + e.id).forEach((el: HTMLElement) => miniGame.update(el, e))
+      document.querySelectorAll('.mini-game-' + e.id).forEach((el: HTMLElement) => miniGame.update(el, e)),
     );
     pubsub.on('socket.in.finish', e =>
-      document.querySelectorAll('.mini-game-' + e.id).forEach((el: HTMLElement) => miniGame.finish(el, e.win))
+      document
+        .querySelectorAll('.mini-game-' + e.id)
+        .forEach((el: HTMLElement) => miniGame.finish(el, e.win)),
     );
     pubsub.on('socket.in.announce', announce);
     pubsub.on('socket.in.tournamentReminder', (data: { id: string; name: string }) => {
@@ -187,14 +179,14 @@ lichess.load.then(() => {
                     xhr.text(this.href, { method: 'post' });
                     $('#announce').remove();
                     return false;
-                  })
+                  }),
               )
               .append(
                 $(`<a class="text" data-icon="${licon.PlayTriangle}">`)
                   .attr('href', url)
-                  .text(siteTrans('resume'))
-              )
-          )
+                  .text(siteTrans('resume')),
+              ),
+          ),
       );
     });
   }, 800);

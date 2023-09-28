@@ -28,7 +28,7 @@ export function ctrl(
   trans: Trans,
   dimension: () => keyof PieceData,
   redraw: Redraw,
-  close: Close
+  close: Close,
 ): PieceCtrl {
   function dimensionData() {
     return data[dimension()];
@@ -42,9 +42,10 @@ export function ctrl(
       const d = dimensionData();
       d.current = t;
       applyPiece(t, d.list, dimension() === 'd3');
+      const field = `pieceSet${dimension() === 'd3' ? '3d' : ''}`;
       xhr
-        .text('/pref/pieceSet' + (dimension() === 'd3' ? '3d' : ''), {
-          body: xhr.form({ set: t }),
+        .text(`/pref/${field}`, {
+          body: xhr.form({ [field]: t }),
           method: 'post',
         })
         .catch(() => lichess.announce({ msg: 'Failed to save piece set  preference' }));
@@ -84,7 +85,7 @@ function pieceView(current: Piece, set: (t: Piece) => void, is3d: boolean) {
         h('piece', {
           attrs: { style: `background-image:url(${lichess.assetUrl(pieceImage(t, is3d))})` },
         }),
-      ]
+      ],
     );
 }
 

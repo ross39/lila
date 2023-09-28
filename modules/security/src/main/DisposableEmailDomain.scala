@@ -72,6 +72,7 @@ private object DisposableEmailDomain:
     "google.com",
     "hotmail.com",
     "hotmail.co.uk",
+    "ikmail.com",
     "mac.com",
     "me.com",
     "mail.com",
@@ -84,6 +85,7 @@ private object DisposableEmailDomain:
     "protonmail.com",
     "protonmail.ch",
     "pm.me",
+    "proton.me",
     /* Other global domains */
     "email.com",
     "games.com" /* AOL */,

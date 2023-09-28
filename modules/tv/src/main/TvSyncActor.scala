@@ -21,7 +21,7 @@ final private[tv] class TvSyncActor(
 
   Bus.subscribe(this, "startGame")
 
-  private val channelTroupers: Map[Tv.Channel, ChannelSyncActor] = Tv.Channel.values.map { c =>
+  private val channelActors: Map[Tv.Channel, ChannelSyncActor] = Tv.Channel.values.map { c =>
     c -> ChannelSyncActor(
       c,
       onSelect = this.!,
@@ -34,7 +34,7 @@ final private[tv] class TvSyncActor(
   private var channelChampions = Map[Tv.Channel, Tv.Champion]()
 
   private def forward[A](channel: Tv.Channel, msg: Any) =
-    channelTroupers get channel foreach { _ ! msg }
+    channelActors get channel foreach { _ ! msg }
 
   protected val process: SyncActor.Receive =
 
@@ -55,37 +55,34 @@ final private[tv] class TvSyncActor(
     case lila.game.actorApi.StartGame(g) =>
       if g.hasClock then
         val candidate = Tv.Candidate(g, g.userIds.exists(lightUserApi.isBotSync))
-        channelTroupers collect {
+        channelActors collect {
           case (chan, trouper) if chan filter candidate => trouper
         } foreach (_ addCandidate g)
 
-    case s @ TvSyncActor.Select => channelTroupers.foreach(_._2 ! s)
+    case s @ TvSyncActor.Select => channelActors.foreach(_._2 ! s)
 
     case Selected(channel, game) =>
       import lila.socket.Socket.makeMessage
-      given Ordering[lila.game.Player] = Ordering.by { p =>
+      given Ordering[lila.game.Player] = Ordering.by: p =>
         p.rating.fold(0)(_.value) + ~p.userId
           .flatMap(lightUserApi.sync)
           .flatMap(_.title)
           .flatMap(Tv.titleScores.get)
-      }
       val player = game.players.all.sorted.lastOption | game.player(game.naturalOrientation)
       val user   = player.userId flatMap lightUserApi.sync
-      (user, player.rating) mapN { (u, r) =>
-        channelChampions += (channel -> Tv.Champion(u, r, game.id))
-      }
+      (user, player.rating).mapN: (u, r) =>
+        channelChampions += (channel -> Tv.Champion(u, r, game.id, game.naturalOrientation))
       recentTvGames.put(game)
       val data = Json.obj(
         "channel" -> channel.key,
         "id"      -> game.id,
         "color"   -> game.naturalOrientation.name,
-        "player" -> user.map { u =>
+        "player" -> user.map: u =>
           Json.obj(
             "name"   -> u.name,
             "title"  -> u.title,
             "rating" -> player.rating
           )
-        }
       )
       Bus.publish(lila.hub.actorApi.tv.TvSelect(game.id, game.speed, data), "tvSelect")
       if channel == Tv.Channel.Best then

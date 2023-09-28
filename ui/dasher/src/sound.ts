@@ -30,13 +30,13 @@ export function ctrl(raw: string[], trans: Trans, redraw: Redraw, close: Close):
 
   const postSet = throttlePromiseDelay(
     () => 1000,
-    (set: string) =>
+    (soundSet: string) =>
       xhr
         .text('/pref/soundSet', {
-          body: xhr.form({ set }),
+          body: xhr.form({ soundSet }),
           method: 'post',
         })
-        .catch(() => lichess.announce({ msg: 'Failed to save sound preference' }))
+        .catch(() => lichess.announce({ msg: 'Failed to save sound preference' })),
   );
 
   return {
@@ -104,7 +104,7 @@ export function view(ctrl: SoundCtrl): VNode {
         }),
         h('div.selector', ctrl.makeList().map(soundView(ctrl, current))),
       ]),
-    ]
+    ],
   );
 }
 
@@ -116,5 +116,5 @@ const soundView = (ctrl: SoundCtrl, current: Key) => (s: Sound) =>
       class: { active: current === s[0] },
       attrs: { 'data-icon': licon.Checkmark, type: 'button' },
     },
-    s[1]
+    s[1],
   );

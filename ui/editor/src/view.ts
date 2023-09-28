@@ -5,7 +5,7 @@ import { dragNewPiece } from 'chessground/drag';
 import { eventPosition, opposite } from 'chessground/util';
 import { Rules } from 'chessops/types';
 import { parseFen } from 'chessops/fen';
-import modal from 'common/modal';
+import { domDialog } from 'common/dialog';
 import EditorCtrl from './ctrl';
 import chessground from './chessground';
 import { Selected, CastlingToggle, EditorState } from './interfaces';
@@ -60,9 +60,9 @@ function studyButton(ctrl: EditorCtrl, state: EditorState): VNode {
             disabled: !state.legalFen,
           },
         },
-        ctrl.trans.noarg('toStudy')
+        ctrl.trans.noarg('toStudy'),
       ),
-    ]
+    ],
   );
 }
 
@@ -75,7 +75,7 @@ function variant2option(key: Rules, name: string, ctrl: EditorCtrl): VNode {
         selected: key == ctrl.rules,
       },
     },
-    `${ctrl.trans.noarg('variant')} | ${name}`
+    `${ctrl.trans.noarg('variant')} | ${name}`,
   );
 }
 
@@ -100,7 +100,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
           'data-fen': pos.fen,
         },
       },
-      pos.name
+      pos.name,
     );
   };
 
@@ -111,7 +111,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
         on: { click: ctrl.startPosition },
         attrs: icon ? dataIcon(icon) : {},
       },
-      ctrl.trans.noarg('startPosition')
+      ctrl.trans.noarg('startPosition'),
     );
   const buttonClear = (icon?: string) =>
     h(
@@ -120,7 +120,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
         on: { click: ctrl.clearBoard },
         attrs: icon ? dataIcon(icon) : {},
       },
-      ctrl.trans.noarg('clearBoard')
+      ctrl.trans.noarg('clearBoard'),
     );
 
   return h('div.board-editor__tools', [
@@ -148,10 +148,10 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                   selected: key[0] === ctrl.turn[0],
                 },
               },
-              ctrl.trans(key)
+              ctrl.trans(key),
             );
-          })
-        )
+          }),
+        ),
       ),
       h('div.castling', [
         h('strong', ctrl.trans.noarg('castling')),
@@ -178,7 +178,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                     'data-fen': pos.fen,
                   },
                 },
-                pos.eco ? `${pos.eco} ${pos.name}` : pos.name
+                pos.eco ? `${pos.eco} ${pos.name}` : pos.name,
               );
             const epd = state.fen.split(' ').slice(0, 4).join(' ');
             const value =
@@ -206,9 +206,9 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                 optgroup(ctrl.trans.noarg('popularOpenings'), ctrl.cfg.positions.map(positionOption)),
                 optgroup(
                   ctrl.trans.noarg('endgamePositions'),
-                  ctrl.cfg.endgamePositions.map(endgamePosition2option)
+                  ctrl.cfg.endgamePositions.map(endgamePosition2option),
                 ),
-              ]
+              ],
             );
           })(),
         ]),
@@ -226,7 +226,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                   },
                 },
               },
-              allVariants.map(x => variant2option(x[0], x[1], ctrl))
+              allVariants.map(x => variant2option(x[0], x[1], ctrl)),
             ),
           ]),
           h('div.actions', [
@@ -243,7 +243,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                   },
                 },
               },
-              ctrl.trans.noarg('flipBoard')
+              ctrl.trans.noarg('flipBoard'),
             ),
             h(
               'a',
@@ -262,7 +262,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                   disabled: !state.legalFen,
                 },
               },
-              ctrl.trans.noarg('analysis')
+              ctrl.trans.noarg('analysis'),
             ),
             h(
               'button',
@@ -274,14 +274,17 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                 },
                 on: {
                   click: () => {
-                    if (state.playable)
-                      modal({
-                        content: $('.continue-with'),
-                      });
+                    if (state.playable) domDialog({ cash: $('.continue-with'), show: 'modal' });
                   },
                 },
               },
-              [h('span.text', { attrs: { 'data-icon': licon.Swords } }, ctrl.trans.noarg('continueFromHere'))]
+              [
+                h(
+                  'span.text',
+                  { attrs: { 'data-icon': licon.Swords } },
+                  ctrl.trans.noarg('continueFromHere'),
+                ),
+              ],
             ),
             studyButton(ctrl, state),
           ]),
@@ -294,7 +297,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                   rel: 'nofollow',
                 },
               },
-              ctrl.trans.noarg('playWithTheMachine')
+              ctrl.trans.noarg('playWithTheMachine'),
             ),
             h(
               'a.button',
@@ -304,7 +307,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                   rel: 'nofollow',
                 },
               },
-              ctrl.trans.noarg('playWithAFriend')
+              ctrl.trans.noarg('playWithAFriend'),
             ),
           ]),
         ]),
@@ -416,9 +419,9 @@ function sparePieces(ctrl: EditorCtrl, color: Color, _orientation: Color, positi
             },
           },
         },
-        [h('div', [h('piece', { attrs })])]
+        [h('div', [h('piece', { attrs })])],
       );
-    })
+    }),
   );
 }
 
@@ -438,7 +441,7 @@ function onSelectSparePiece(ctrl: EditorCtrl, s: Selected, upEvent: string): (e:
           role: s[1],
         },
         e,
-        true
+        true,
       );
 
       document.addEventListener(
@@ -449,7 +452,7 @@ function onSelectSparePiece(ctrl: EditorCtrl, s: Selected, upEvent: string): (e:
           else ctrl.selected(s);
           ctrl.redraw();
         },
-        { once: true }
+        { once: true },
       );
     }
   };
@@ -481,6 +484,6 @@ export default function (ctrl: EditorCtrl): VNode {
       sparePieces(ctrl, color, color, 'bottom'),
       controls(ctrl, state),
       inputs(ctrl, state.fen),
-    ]
+    ],
   );
 }

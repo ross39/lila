@@ -28,7 +28,7 @@ export function ctrl(
   trans: Trans,
   dimension: () => keyof ThemeData,
   redraw: Redraw,
-  close: Close
+  close: Close,
 ): ThemeCtrl {
   function dimensionData() {
     return data[dimension()];
@@ -42,9 +42,10 @@ export function ctrl(
       const d = dimensionData();
       d.current = t;
       applyTheme(t, d.list, dimension() === 'd3');
+      const field = `theme${dimension() === 'd3' ? '3d' : ''}`;
       xhr
-        .text('/pref/theme' + (dimension() === 'd3' ? '3d' : ''), {
-          body: xhr.form({ theme: t }),
+        .text(`/pref/${field}`, {
+          body: xhr.form({ [field]: t }),
           method: 'post',
         })
         .catch(() => lichess.announce({ msg: 'Failed to save theme preference' }));
@@ -72,7 +73,7 @@ function themeView(current: Theme, set: (t: Theme) => void) {
         attrs: { title: t, type: 'button' },
         class: { active: current === t },
       },
-      [h('span.' + t)]
+      [h('span.' + t)],
     );
 }
 

@@ -1,6 +1,7 @@
 import { isEmpty } from 'common';
 import * as licon from 'common/licon';
-import modal from 'common/modal';
+import { domDialog } from 'common/dialog';
+import { isTouchDevice } from 'common/mobile';
 import { bind, dataIcon, MaybeVNodes } from 'common/snabbdom';
 import { h, VNode } from 'snabbdom';
 import { AutoplayDelay } from '../autoplay';
@@ -58,9 +59,9 @@ function autoplayButtons(ctrl: AnalyseCtrl): VNode {
           },
           hook: bind('click', () => ctrl.togglePlay(speed.delay), ctrl.redraw),
         },
-        ctrl.trans.noarg(speed.name)
+        ctrl.trans.noarg(speed.name),
       );
-    })
+    }),
   );
 }
 
@@ -68,10 +69,10 @@ const formatHashSize = (v: number): string => (v < 1000 ? v + 'MB' : Math.round(
 
 const hiddenInput = (name: string, value: string) => h('input', { attrs: { type: 'hidden', name, value } });
 
-export function studyButton(ctrl: AnalyseCtrl) {
+function studyButton(ctrl: AnalyseCtrl) {
   if (ctrl.study && !ctrl.ongoing)
     return h(
-      'a.button.button-empty',
+      'a',
       {
         attrs: {
           href: `/study/${ctrl.study.data.id}#${ctrl.study.currentChapter().id}`,
@@ -80,7 +81,7 @@ export function studyButton(ctrl: AnalyseCtrl) {
           'data-icon': licon.StudyBoard,
         },
       },
-      ctrl.trans.noarg('openStudy')
+      ctrl.trans.noarg('openStudy'),
     );
   if (ctrl.study || ctrl.ongoing) return;
   return h(
@@ -90,7 +91,7 @@ export function studyButton(ctrl: AnalyseCtrl) {
         method: 'post',
         action: '/study/as',
       },
-      hook: bind('submit', e => {
+      hook: bind('click submit', e => {
         const pgnInput = (e.target as HTMLElement).querySelector('input[name=pgn]') as HTMLInputElement;
         if (pgnInput && (!ctrl.persistence || ctrl.persistence.isDirty)) {
           pgnInput.value = pgnExport.renderFullTxt(ctrl);
@@ -104,16 +105,16 @@ export function studyButton(ctrl: AnalyseCtrl) {
       hiddenInput('variant', ctrl.data.game.variant.key),
       hiddenInput('fen', ctrl.tree.root.fen),
       h(
-        'button.button.button-empty',
+        'button',
         {
           attrs: {
             type: 'submit',
             'data-icon': licon.StudyBoard,
           },
         },
-        ctrl.trans.noarg('toStudy')
+        ctrl.trans.noarg('toStudy'),
       ),
-    ]
+    ],
   );
 }
 
@@ -127,7 +128,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
   const tools: MaybeVNodes = [
     h('div.action-menu__tools', [
       h(
-        'a.button.button-empty',
+        'a',
         {
           hook: bind('click', ctrl.flip),
           attrs: {
@@ -135,12 +136,12 @@ export function view(ctrl: AnalyseCtrl): VNode {
             title: 'Hotkey: f',
           },
         },
-        noarg('flipBoard')
+        noarg('flipBoard'),
       ),
       ctrl.ongoing
         ? null
         : h(
-            'a.button.button-empty',
+            'a',
             {
               attrs: {
                 href: d.userAnalysis
@@ -155,26 +156,36 @@ export function view(ctrl: AnalyseCtrl): VNode {
                 rel: 'nofollow',
               },
             },
-            noarg('boardEditor')
+            noarg('boardEditor'),
           ),
       canContinue
         ? h(
-            'a.button.button-empty',
+            'a',
             {
-              hook: bind('click', _ =>
-                modal({
-                  content: $('.continue-with.g_' + d.game.id),
-                })
+              hook: bind('click', () =>
+                domDialog({ cash: $('.continue-with.g_' + d.game.id), show: 'modal' }),
               ),
               attrs: dataIcon(licon.Swords),
             },
-            noarg('continueFromHere')
+            noarg('continueFromHere'),
           )
         : null,
       studyButton(ctrl),
+      ctrl.persistence?.isDirty
+        ? h(
+            'a',
+            {
+              attrs: {
+                title: noarg('clearSavedMoves'),
+                'data-icon': licon.Trash,
+              },
+              hook: bind('click', ctrl.persistence.clear),
+            },
+            noarg('clearSavedMoves'),
+          )
+        : null,
     ]),
   ];
-
   const notSupported =
     (ceval?.technology == 'external' ? 'Engine' : 'Browser') + ' does not support this option';
 
@@ -191,7 +202,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
               disabled: mandatoryCeval,
               change: ctrl.toggleComputer,
             },
-            ctrl
+            ctrl,
           ),
           ...(ctrl.showComputer()
             ? [
@@ -203,7 +214,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                     checked: ctrl.showAutoShapes(),
                     change: ctrl.toggleAutoShapes,
                   },
-                  ctrl
+                  ctrl,
                 ),
                 ctrlToggle(
                   {
@@ -212,7 +223,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                     checked: ctrl.showGauge(),
                     change: ctrl.toggleGauge,
                   },
-                  ctrl
+                  ctrl,
                 ),
                 ctrlToggle(
                   {
@@ -222,7 +233,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                     checked: ceval.infinite(),
                     change: ctrl.cevalSetInfinite,
                   },
-                  ctrl
+                  ctrl,
                 ),
                 ceval.technology != 'external'
                   ? ctrlToggle(
@@ -236,7 +247,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                         change: ceval.enableNnue,
                         disabled: !ceval.platform.supportsNnue,
                       },
-                      ctrl
+                      ctrl,
                     )
                   : null,
                 (id => {
@@ -271,7 +282,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                     }),
                     h(
                       'div.range_value',
-                      `${ceval.threads ? ceval.threads() : 1} / ${ceval.platform.maxThreads}`
+                      `${ceval.threads ? ceval.threads() : 1} / ${ceval.platform.maxThreads}`,
                     ),
                   ]);
                 })('analyse-threads'),
@@ -289,7 +300,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                       },
                       hook: rangeConfig(
                         () => Math.floor(Math.log2(ceval.hashSize())),
-                        v => ctrl.cevalSetHashSize(Math.pow(2, v))
+                        v => ctrl.cevalSetHashSize(Math.pow(2, v)),
                       ),
                     }),
                     h('div.range_value', formatHashSize(ceval.hashSize())),
@@ -311,18 +322,32 @@ export function view(ctrl: AnalyseCtrl): VNode {
           ctrl.actionMenu.toggle();
         },
       },
-      ctrl
+      ctrl,
     ),
-    ctrlToggle(
-      {
-        name: 'Annotations on board',
-        title: 'Display analysis symbols on the board',
-        id: 'move-annotation',
-        checked: ctrl.showMoveAnnotation(),
-        change: ctrl.toggleMoveAnnotation,
-      },
-      ctrl
-    ),
+    isTouchDevice()
+      ? null
+      : ctrlToggle(
+          {
+            name: 'showVariationArrows',
+            title: 'Variation navigation arrows',
+            id: 'variationArrows',
+            checked: ctrl.variationArrowsProp(),
+            change: ctrl.toggleVariationArrows,
+          },
+          ctrl,
+        ),
+    ctrl.ongoing
+      ? null
+      : ctrlToggle(
+          {
+            name: 'Annotations on board',
+            title: 'Display analysis symbols on the board',
+            id: 'move-annotation',
+            checked: ctrl.showMoveAnnotation(),
+            change: ctrl.toggleMoveAnnotation,
+          },
+          ctrl,
+        ),
   ];
 
   return h('div.action-menu', [
@@ -343,7 +368,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                 rel: 'nofollow',
               },
             },
-            noarg('playWithTheMachine')
+            noarg('playWithTheMachine'),
           ),
           h(
             'a.button',
@@ -355,7 +380,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
                 rel: 'nofollow',
               },
             },
-            noarg('playWithAFriend')
+            noarg('playWithAFriend'),
           ),
         ])
       : null,

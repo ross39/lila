@@ -13,13 +13,13 @@ export const loadCss = (url: string, media?: 'dark' | 'light'): Promise<void> =>
   if (!loadedCss.has(url)) {
     const el = document.createElement('link');
     el.rel = 'stylesheet';
-    el.href = assetUrl(url);
+    el.href = assetUrl(lichess.debug ? `${url}?_=${Date.now()}` : url);
     if (media) el.media = `(prefers-color-scheme: ${media})`;
     loadedCss.set(
       url,
       new Promise<void>(resolve => {
         el.onload = () => resolve();
-      })
+      }),
     );
     document.head.append(el);
   }
@@ -31,12 +31,11 @@ export const loadCssPath = async (key: string): Promise<void> => {
   const load = (theme: string, media?: 'dark' | 'light') =>
     loadCss(
       `css/${key}.${document.dir || 'ltr'}.${theme}.${$('body').data('dev') ? 'dev' : 'min'}.css`,
-      media
+      media,
     );
   if (theme === 'system') {
     if (supportsSystemTheme()) {
-      await load('dark', 'dark');
-      await load('light', 'light');
+      await Promise.all([load('dark', 'dark'), load('light', 'light')]);
     } else {
       await load('dark');
     }
@@ -54,7 +53,7 @@ export const loadIife = (url: string, opts: AssetUrlOpts = {}): Promise<void> =>
 
 export async function loadEsm<T, ModuleOpts = any>(
   name: string,
-  opts?: { init?: ModuleOpts; url?: AssetUrlOpts }
+  opts?: { init?: ModuleOpts; url?: AssetUrlOpts },
 ): Promise<T> {
   const module = await import(assetUrl(jsModule(name), opts?.url));
   return module.initModule ? module.initModule(opts?.init) : module.default(opts?.init);
@@ -66,8 +65,10 @@ export const userComplete = async (opts: UserCompleteOpts): Promise<UserComplete
 };
 
 export const hopscotch = () => {
-  loadCss('vendor/hopscotch/dist/css/hopscotch.min.css');
-  return loadIife('vendor/hopscotch/dist/js/hopscotch.min.js', {
+  loadCss('npm/hopscotch/dist/css/hopscotch.min.css');
+  return loadIife('npm/hopscotch/dist/js/hopscotch.min.js', {
     noVersion: true,
   });
 };
+
+export const embedChessground = () => import(assetUrl('npm/chessground.min.js'));

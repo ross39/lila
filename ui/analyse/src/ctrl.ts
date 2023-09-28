@@ -7,6 +7,7 @@ import { plural } from './view/util';
 import debounce from 'common/debounce';
 import GamebookPlayCtrl from './study/gamebook/gamebookPlayCtrl';
 import type makeStudyCtrl from './study/studyCtrl';
+import { isTouchDevice } from 'common/mobile';
 import throttle from 'common/throttle';
 import {
   AnalyseOpts,
@@ -95,6 +96,7 @@ export default class AnalyseCtrl {
   flipped = false;
   showComments = true; // whether to display comments in the move tree
   showAutoShapes = storedBooleanProp('analyse.show-auto-shapes', true);
+  variationArrowsProp = storedBooleanProp('analyse.show-variation-arrows', true);
   showGauge = storedBooleanProp('analyse.show-gauge', true);
   showComputer = storedBooleanProp('analyse.show-computer', true);
   showMoveAnnotation = storedBooleanProp('analyse.show-move-annotation', true);
@@ -122,7 +124,11 @@ export default class AnalyseCtrl {
   nvui?: NvuiPlugin;
   pvUciQueue: Uci[] = [];
 
-  constructor(readonly opts: AnalyseOpts, readonly redraw: Redraw, makeStudy?: typeof makeStudyCtrl) {
+  constructor(
+    readonly opts: AnalyseOpts,
+    readonly redraw: Redraw,
+    makeStudy?: typeof makeStudyCtrl,
+  ) {
     this.data = opts.data;
     this.element = opts.element;
     this.trans = opts.trans;
@@ -130,7 +136,7 @@ export default class AnalyseCtrl {
     this.promotion = new PromotionCtrl(
       this.withCg,
       () => this.withCg(g => g.set(this.cgConfig)),
-      this.redraw
+      this.redraw,
     );
 
     if (this.data.forecast) this.forecast = new ForecastCtrl(this.data.forecast, this.data, redraw);
@@ -183,7 +189,7 @@ export default class AnalyseCtrl {
     });
 
     lichess.pubsub.on('ply.trigger', () =>
-      lichess.pubsub.emit('ply', this.node.ply, this.tree.lastMainlineNode(this.path).ply === this.node.ply)
+      lichess.pubsub.emit('ply', this.node.ply, this.tree.lastMainlineNode(this.path).ply === this.node.ply),
     );
     lichess.pubsub.on('analysis.chart.click', index => {
       this.jumpToIndex(index);
@@ -214,7 +220,6 @@ export default class AnalyseCtrl {
     this.fork = makeFork(this);
 
     lichess.sound.preloadBoardSounds();
-    lichess.sound.move();
   }
 
   private makeInitialPath = (): string => {
@@ -351,14 +356,6 @@ export default class AnalyseCtrl {
     return config;
   }
 
-  private throttleSound = (name: string) => throttle(100, () => lichess.sound.play(name));
-
-  private sound = {
-    move: this.throttleSound('move'),
-    capture: this.throttleSound('capture'),
-    check: this.throttleSound('check'),
-  };
-
   private onChange: () => void = throttle(300, () => {
     lichess.pubsub.emit('analysis.change', this.node.fen, this.path);
   });
@@ -380,15 +377,7 @@ export default class AnalyseCtrl {
     this.setPath(path);
     if (pathChanged) {
       if (this.study) this.study.setPath(path, this.node);
-      if (isForwardStep) {
-        if (!this.node.uci) this.sound.move();
-        // initial position
-        else if (!this.playedLastMoveMyself()) {
-          if (this.node.san!.includes('x')) this.sound.capture();
-          else this.sound.move();
-        }
-        if (/\+|#/.test(this.node.san!)) this.sound.check();
-      }
+      if (isForwardStep) lichess.sound.move(this.node);
       this.threatMode(false);
       this.ceval.stop();
       this.startCeval();
@@ -404,7 +393,6 @@ export default class AnalyseCtrl {
       if (this.practice) this.practice.onJump();
       if (this.study) this.study.onJump();
     }
-    lichess.sound.move(this.node);
     lichess.pubsub.emit('ply', this.node.ply, this.tree.lastMainlineNode(this.path).ply === this.node.ply);
     this.showGround();
   }
@@ -488,7 +476,7 @@ export default class AnalyseCtrl {
       this.justPlayed = roleToChar(piece.role).toUpperCase() + '@' + pos;
       this.justDropped = piece.role;
       this.justCaptured = undefined;
-      this.sound.move();
+      lichess.sound.move();
       const drop = {
         role: piece.role,
         pos,
@@ -505,9 +493,6 @@ export default class AnalyseCtrl {
   userMove = (orig: Key, dest: Key, capture?: JustCaptured): void => {
     this.justPlayed = orig;
     this.justDropped = undefined;
-    const piece = this.chessground.state.pieces.get(dest);
-    const isCapture = capture || (piece && piece.role == 'pawn' && orig[0] != dest[0]);
-    this.sound[isCapture ? 'capture' : 'move']();
     if (
       !this.promotion.start(orig, dest, {
         submit: (orig, dest, prom) => this.sendMove(orig, dest, capture, prom),
@@ -582,7 +567,7 @@ export default class AnalyseCtrl {
         'Delete ' +
           plural('move', count.nodes) +
           (count.comments ? ' and ' + plural('comment', count.comments) : '') +
-          '?'
+          '?',
       )
     )
       return;
@@ -628,6 +613,7 @@ export default class AnalyseCtrl {
 
   setAutoShapes = (): void => {
     this.withCg(cg => cg.setAutoShapes(computeAutoShapes(this)));
+    keyboard.maybeShowVariationArrowHelp(this);
   };
 
   private onNewCeval = (ev: Tree.ClientEval, path: Tree.Path, isThreat?: boolean): void => {
@@ -687,7 +673,7 @@ export default class AnalyseCtrl {
   outcome(node?: Tree.Node): Outcome | undefined {
     return this.position(node || this.node).unwrap(
       pos => pos.outcome(),
-      _ => undefined
+      _ => undefined,
     );
   }
 
@@ -788,12 +774,31 @@ export default class AnalyseCtrl {
   };
 
   private resetAutoShapes() {
-    if (this.showAutoShapes() || this.showMoveAnnotation()) this.setAutoShapes();
+    if (this.showAutoShapes() || this.variationArrowsProp() || this.showMoveAnnotation())
+      this.setAutoShapes();
     else this.chessground && this.chessground.setAutoShapes([]);
+  }
+
+  showVariationArrows() {
+    const chap = this.study?.data.chapter;
+    return (
+      !isTouchDevice() &&
+      !chap?.practice &&
+      chap?.conceal === undefined &&
+      !chap?.gamebook &&
+      !this.retro &&
+      this.variationArrowsProp() &&
+      this.node.children.length > 1
+    );
   }
 
   toggleAutoShapes = (v: boolean): void => {
     this.showAutoShapes(v);
+    this.resetAutoShapes();
+  };
+
+  toggleVariationArrows = (v?: boolean): void => {
+    this.variationArrowsProp(v ?? !this.variationArrowsProp());
     this.resetAutoShapes();
   };
 
@@ -810,7 +815,8 @@ export default class AnalyseCtrl {
     if (!this.showComputer()) {
       this.tree.removeComputerVariations();
       if (this.ceval.enabled()) this.toggleCeval();
-    } else this.resetAutoShapes();
+    }
+    this.resetAutoShapes();
   }
 
   toggleComputer = () => {
@@ -830,7 +836,7 @@ export default class AnalyseCtrl {
     if (data.analysis)
       data.analysis.partial = !!treeOps.findInMainline(
         data.tree,
-        n => !n.eval && !!n.children.length && n.ply <= 300
+        n => !n.eval && !!n.children.length && n.ply <= 300,
       );
     if (data.division) this.data.game.division = data.division;
     if (this.retro) this.retro.onMergeAnalysisData();
@@ -850,7 +856,7 @@ export default class AnalyseCtrl {
         makeSquare(move.from),
         to,
         capture && piece && capture.color !== piece.color ? capture : undefined,
-        move.promotion
+        move.promotion,
       );
     } else
       this.chessground.newPiece(
@@ -858,7 +864,7 @@ export default class AnalyseCtrl {
           color: this.chessground.state.movable.color as Color,
           role: move.role,
         },
-        to
+        to,
       );
   }
 
@@ -914,7 +920,6 @@ export default class AnalyseCtrl {
     if (this.retro) this.retro = undefined;
     if (this.practice) this.togglePractice();
     if (this.explorer.enabled()) this.explorer.toggle();
-    this.persistence?.toggleOpen(false);
     this.actionMenu(false);
   };
 
@@ -946,12 +951,6 @@ export default class AnalyseCtrl {
       });
       this.setAutoShapes();
     }
-  };
-
-  togglePersistence = () => {
-    const isOpen = this.persistence?.open();
-    this.closeTools();
-    this.persistence?.toggleOpen(!isOpen);
   };
 
   restartPractice() {

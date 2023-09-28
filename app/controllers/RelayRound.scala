@@ -16,19 +16,19 @@ final class RelayRound(
     apiC: => Api
 ) extends LilaController(env):
 
-  def form(tourId: String) = Auth { ctx ?=> _ ?=>
+  def form(tourId: TourModel.Id) = Auth { ctx ?=> _ ?=>
     NoLameOrBot:
       WithTourAndRoundsCanUpdate(tourId): trs =>
         Ok.page:
           html.relay.roundForm.create(env.relay.roundForm.create(trs), trs.tour)
   }
 
-  def create(tourId: String) = AuthOrScopedBody(_.Study.Write) { ctx ?=> me ?=>
+  def create(tourId: TourModel.Id) = AuthOrScopedBody(_.Study.Write) { ctx ?=> me ?=>
     NoLameOrBot:
       WithTourAndRoundsCanUpdate(tourId): trs =>
         val tour = trs.tour
         def whenRateLimited = negotiate(
-          Redirect(routes.RelayTour.redirectOrApiTour(tour.slug, tour.id.value)),
+          Redirect(routes.RelayTour.show(tour.slug, tour.id.value)),
           rateLimited
         )
         env.relay.roundForm

@@ -20,7 +20,7 @@ export const menu = (
   trans: Trans,
   redraw: Redraw,
   toggle: Toggle,
-  content: (menu: BoardMenu) => MaybeVNodes
+  content: (menu: BoardMenu) => MaybeVNodes,
 ): MaybeVNode =>
   toggle()
     ? h(
@@ -28,12 +28,17 @@ export const menu = (
         {
           hook: onInsert(onClickAway(() => toggle(false))),
         },
-        content(new BoardMenu(trans, redraw))
+        content(new BoardMenu(trans, redraw)),
       )
     : undefined;
 
 export class BoardMenu {
-  constructor(readonly trans: Trans, readonly redraw: Redraw) {}
+  anonymous = document.querySelector('body[data-user]') === null;
+
+  constructor(
+    readonly trans: Trans,
+    readonly redraw: Redraw,
+  ) {}
 
   flip = (name: string, active: boolean, onChange: () => void) =>
     h(
@@ -46,7 +51,7 @@ export class BoardMenu {
         },
         hook: onInsert(bindMobileMousedown(onChange)),
       },
-      name
+      name,
     );
 
   zenMode = (enabled = true) =>
@@ -64,7 +69,8 @@ export class BoardMenu {
       id: 'voice',
       checked: toggle(),
       change: toggle,
-      disabled: !enabled,
+      title: this.anonymous ? 'Must be logged in' : '',
+      disabled: this.anonymous || !enabled,
     });
 
   keyboardInput = (toggle: Toggle, enabled = true) =>
@@ -73,7 +79,8 @@ export class BoardMenu {
       id: 'keyboard',
       checked: toggle(),
       change: toggle,
-      disabled: !enabled,
+      title: this.anonymous ? 'Must be logged in' : '',
+      disabled: this.anonymous || !enabled,
     });
 
   confirmMove = (toggle: Toggle, enabled = true) =>

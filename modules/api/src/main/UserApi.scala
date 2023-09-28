@@ -16,8 +16,10 @@ final class UserApi(
     crosstableApi: lila.game.CrosstableApi,
     gameCache: lila.game.Cached,
     userApi: lila.user.UserApi,
+    userRepo: lila.user.UserRepo,
     userCache: lila.user.Cached,
     prefApi: lila.pref.PrefApi,
+    streamerApi: lila.streamer.StreamerApi,
     liveStreamApi: lila.streamer.LiveStreamApi,
     gameProxyRepo: lila.round.GameProxyRepo,
     trophyApi: lila.user.TrophyApi,
@@ -43,7 +45,8 @@ final class UserApi(
   def extended(
       u: User | User.WithPerfs,
       withFollows: Boolean,
-      withTrophies: Boolean
+      withTrophies: Boolean,
+      forWiki: Boolean = false
   )(using as: Option[Me], lang: Lang): Fu[JsObject] =
     u.match
       case u: User           => userApi.withPerfs(u)
@@ -52,59 +55,89 @@ final class UserApi(
         if u.enabled.no
         then fuccess(jsonView disabled u.light)
         else
-          gameProxyRepo.urgentGames(u).dmap(_.headOption) zip
-            as.filter(u !=).so(me => crosstableApi.nbGames(me.userId, u.id)) zip
-            withFollows.soFu(relationApi.countFollowing(u.id)) zip
-            as.isDefined.so(prefApi followable u.id) zip
-            as.map(_.userId).so(relationApi.fetchRelation(_, u.id)) zip
-            as.map(_.userId).so(relationApi.fetchFollows(u.id, _)) zip
-            bookmarkApi.countByUser(u.user) zip
-            gameCache.nbPlaying(u.id) zip
-            gameCache.nbImportedBy(u.id) zip
-            withTrophies.soFu(getTrophiesAndAwards(u.user)) map {
-            // format: off
-              case (((((((((gameOption,nbGamesWithMe),following),followable),
-                relation),isFollowed),nbBookmarks),nbPlaying),nbImported),trophiesAndAwards)=>
-              // format: on
-                jsonView.full(u.user, u.perfs.some, withProfile = true) ++ {
-                  Json
-                    .obj(
-                      "url"     -> makeUrl(s"@/${u.username}"), // for app BC
-                      "playing" -> gameOption.map(g => makeUrl(s"${g.gameId}/${g.color.name}")),
-                      "count" -> Json.obj(
-                        "all"      -> u.count.game,
-                        "rated"    -> u.count.rated,
-                        "ai"       -> u.count.ai,
-                        "draw"     -> u.count.draw,
-                        "drawH"    -> u.count.drawH,
-                        "loss"     -> u.count.loss,
-                        "lossH"    -> u.count.lossH,
-                        "win"      -> u.count.win,
-                        "winH"     -> u.count.winH,
-                        "bookmark" -> nbBookmarks,
-                        "playing"  -> nbPlaying,
-                        "import"   -> nbImported,
-                        "me"       -> nbGamesWithMe
-                      )
+          (
+            gameProxyRepo.urgentGames(u).dmap(_.headOption),
+            as.filter(u !=).so(me => crosstableApi.nbGames(me.userId, u.id)),
+            withFollows.soFu(relationApi.countFollowing(u.id)),
+            as.isDefined.so(prefApi followable u.id),
+            as.map(_.userId).so(relationApi.fetchRelation(_, u.id)),
+            as.map(_.userId).so(relationApi.fetchFollows(u.id, _)),
+            bookmarkApi.countByUser(u.user),
+            gameCache.nbPlaying(u.id),
+            gameCache.nbImportedBy(u.id),
+            (withTrophies && !u.lame).soFu(getTrophiesAndAwards(u.user)),
+            streamerApi.listed(u.user),
+            forWiki.soFu(userRepo.email(u.id))
+          ).mapN:
+            (
+                gameOption,
+                nbGamesWithMe,
+                following,
+                followable,
+                relation,
+                isFollowed,
+                nbBookmarks,
+                nbPlaying,
+                nbImported,
+                trophiesAndAwards,
+                streamer,
+                email
+            ) =>
+              jsonView.full(u.user, u.perfs.some, withProfile = true) ++ {
+                Json
+                  .obj(
+                    "url"     -> makeUrl(s"@/${u.username}"), // for app BC
+                    "playing" -> gameOption.map(g => makeUrl(s"${g.gameId}/${g.color.name}")),
+                    "count" -> Json.obj(
+                      "all"      -> u.count.game,
+                      "rated"    -> u.count.rated,
+                      "ai"       -> u.count.ai,
+                      "draw"     -> u.count.draw,
+                      "drawH"    -> u.count.drawH,
+                      "loss"     -> u.count.loss,
+                      "lossH"    -> u.count.lossH,
+                      "win"      -> u.count.win,
+                      "winH"     -> u.count.winH,
+                      "bookmark" -> nbBookmarks,
+                      "playing"  -> nbPlaying,
+                      "import"   -> nbImported,
+                      "me"       -> nbGamesWithMe
                     )
-                    .add("streaming", liveStreamApi.isStreaming(u.id))
-                    .add("nbFollowing", following)
-                    .add("nbFollowers", withFollows.option(0))
-                    .add("trophies", trophiesAndAwards ifFalse u.lame map trophiesJson) ++
-                    as.isDefined.so:
-                      Json.obj(
-                        "followable" -> followable,
-                        "following"  -> relation.has(true),
-                        "blocking"   -> relation.has(false),
-                        "followsYou" -> isFollowed
-                      )
-
-                }.noNull
-            }
+                  )
+                  .add("email", email)
+                  .add("groups", forWiki.option(wikiGroups(u.user)))
+                  .add("streaming", liveStreamApi.isStreaming(u.id))
+                  .add("nbFollowing", following)
+                  .add("nbFollowers", withFollows.option(0))
+                  .add("trophies", trophiesAndAwards map trophiesJson)
+                  .add(
+                    "streamer",
+                    streamer.map: s =>
+                      Json
+                        .obj()
+                        .add(
+                          "twitch",
+                          s.twitch.map: t =>
+                            Json.obj("channel" -> t.fullUrl)
+                        )
+                        .add(
+                          "youTube",
+                          s.youTube.map: y =>
+                            Json.obj("channel" -> y.fullUrl)
+                        )
+                  ) ++
+                  as.isDefined.so:
+                    Json.obj(
+                      "followable" -> followable,
+                      "following"  -> relation.has(true),
+                      "blocking"   -> relation.has(false),
+                      "followsYou" -> isFollowed
+                    )
+              }.noNull
 
   def getTrophiesAndAwards(u: User) =
-    trophyApi.findByUser(u) zip shieldApi.active(u) zip revolutionApi.active(u) map {
-      case ((trophies, shields), revols) =>
+    (trophyApi.findByUser(u), shieldApi.active(u), revolutionApi.active(u)).mapN:
+      case (trophies, shields, revols) =>
         val roleTrophies = trophyApi.roleBasedTrophies(
           u,
           Granter.of(_.PublicMod)(u),
@@ -113,7 +146,6 @@ final class UserApi(
           Granter.of(_.ContentTeam)(u)
         )
         UserApi.TrophiesAndAwards(userCache.rankingsOf(u.id), trophies ::: roleTrophies, shields, revols)
-    }
 
   private def trophiesJson(all: UserApi.TrophiesAndAwards)(using Lang): JsArray =
     JsArray {
@@ -145,6 +177,11 @@ final class UserApi(
     js.add("streaming", liveStreamApi.isStreaming(id))
 
   private def makeUrl(path: String): String = s"${net.baseUrl}/$path"
+
+  private def wikiGroups(u: User): List[String] =
+    val perms          = lila.security.Permission.expanded(u.roles).map(_.name).toList
+    val wikiAdminGroup = "Administrators"
+    if perms.contains("Admin") then wikiAdminGroup :: perms else perms
 
 object UserApi:
   case class TrophiesAndAwards(

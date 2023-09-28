@@ -119,6 +119,7 @@
   <string name="openStudy">Otvoriť štúdie</string>
   <string name="enable">Povoliť analýzu</string>
   <string name="bestMoveArrow">Šípka pre najlepší ťah</string>
+  <string name="showVariationArrows">Zobraziť šípky variantov</string>
   <string name="evaluationGauge">Ukazovateľ hodnotenia</string>
   <string name="multipleLines">Počet variantov</string>
   <string name="cpus">Procesory</string>
@@ -570,13 +571,11 @@
   <string name="firstName">Meno</string>
   <string name="lastName">Priezvisko</string>
   <string name="biography">Životopis</string>
-  <string name="countryOrFlag" comment="countryOrFlag&#10;Appears when you edit your profile. Lets a player add a country/flag (not all flags are for countries) to their profile">Štát alebo vlajka</string>
+  <string name="flag" comment="flag&#10;Appears when you edit your profile. Lets a player add a country/flag (not all flags are for countries) to their profile">Vlajka</string>
   <string name="thankYou">Ďakujeme!</string>
   <string name="socialMediaLinks">Odkazy na sociálne siete</string>
   <string name="oneUrlPerLine">Jedna URL na riadok.</string>
   <string name="inlineNotation">Notácia v riadkoch</string>
-  <string name="savingMoves">Úložisko dočasných ťahov</string>
-  <string name="savingMovesHelp">Vaše varianty vždy ukladáme do cash pamäti Vášho prehliadača.</string>
   <string name="makeAStudy">Pre bezpečné uchovanie a zdieľanie pouvažujte nad vytvorením štúdie.</string>
   <string name="clearSavedMoves">Zrušiť dočasné ťahy</string>
   <string name="previouslyOnLichessTV">Bolo na Lichess TV</string>
@@ -782,7 +781,7 @@
   <string name="yourPerfTypeRatingIsRating">Vaše %1$s hodnotenie je %2$s.</string>
   <string name="youAreBetterThanPercentOfPerfTypePlayers">Ste lepší/lepšia než %1$s %2$s hráčov.</string>
   <string name="userIsBetterThanPercentOfPerfTypePlayers">%1$s je lepší/lepšia než %2$s %3$s hráčov.</string>
-  <string name="betterThanPercentPlayers" comment="betterThanPercentPlayers&#10;&#10;%1$s is a percentage&#10;%2$s is a time control or variant e.g. &amp;quot;Blitz&amp;quot; or &amp;quot;Antichess&amp;quot;&#10;&#10;Example: Better than 75% of Blitz players&#10;&#10;This is shown as a hover tooltip on the highest and lowest rating of a player i.e. the meaning is along the lines of &amp;quot;The player's highest rating of 2500 makes/made them better than 75% of Blitz players&amp;quot;">Lepší než %1$s %2$s hráčov</string>
+  <string name="betterThanPercentPlayers">Lepší než %1$s %2$s hráčov</string>
   <string name="youDoNotHaveAnEstablishedPerfTypeRating">Nemáte ustálené %s hodnotenie.</string>
   <string name="yourRating">Váš rating</string>
   <string name="cumulative">Kumulatívne</string>

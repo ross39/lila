@@ -15,8 +15,8 @@ export default function () {
   if ('ontouchstart' in window && !window.matchMedia('(max-width: 979px)').matches)
     $('#topnav > section > a').removeAttr('href');
 
-  $('#topnav-toggle').on('change', e =>
-    document.body.classList.toggle('masked', (e.target as HTMLInputElement).checked)
+  $('#tn-tg').on('change', e =>
+    document.body.classList.toggle('masked', (e.target as HTMLInputElement).checked),
   );
 
   $('#top').on('click', '.toggle', function (this: HTMLElement) {

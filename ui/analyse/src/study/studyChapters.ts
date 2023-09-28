@@ -26,7 +26,7 @@ export default class StudyChaptersCtrl {
     readonly send: StudySocketSend,
     setTab: () => void,
     chapterConfig: (id: string) => Promise<StudyChapterConfig>,
-    root: AnalyseCtrl
+    root: AnalyseCtrl,
   ) {
     this.list = prop(initChapters);
     this.newForm = chapterNewForm(send, this.list, setTab, root);
@@ -149,8 +149,8 @@ export function view(ctrl: StudyCtrl): VNode {
               ? h('ongoing', { attrs: { ...dataIcon(licon.DiscBig), title: 'Ongoing' } })
               : null,
             !chapter.ongoing && chapter.res ? h('res', chapter.res) : null,
-            canContribute ? h('i.act', { attrs: dataIcon(licon.Gear) }) : null,
-          ]
+            canContribute ? h('i.act', { attrs: { ...dataIcon(licon.Gear), title: 'Edit chapter' } }) : null,
+          ],
         );
       })
       .concat(
@@ -161,10 +161,10 @@ export function view(ctrl: StudyCtrl): VNode {
                 {
                   hook: bind('click', ctrl.chapters.toggleNewForm, ctrl.redraw),
                 },
-                [h('span', iconTag(licon.PlusButton)), h('h3', ctrl.trans.noarg('addNewChapter'))]
+                [h('span', iconTag(licon.PlusButton)), h('h3', ctrl.trans.noarg('addNewChapter'))],
               ),
             ]
-          : []
-      )
+          : [],
+      ),
   );
 }

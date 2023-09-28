@@ -12,7 +12,7 @@ export const fenInput = (ctrl: LobbyController) => {
         attrs: { placeholder: trans('pasteTheFenStringHere'), value: fen },
         on: {
           input: (e: InputEvent) => {
-            setupCtrl.fen((e.target as HTMLInputElement).value);
+            setupCtrl.fen((e.target as HTMLInputElement).value.trim());
             setupCtrl.validateFen();
           },
         },
@@ -29,8 +29,8 @@ export const fenInput = (ctrl: LobbyController) => {
     ]),
     h(
       'a.fen__board',
-      { attrs: { href: '/editor' } },
-      setupCtrl.fenError || !setupCtrl.lastValidFen
+      { attrs: { href: `/editor/${setupCtrl.lastValidFen.replace(' ', '_')}` } },
+      !setupCtrl.lastValidFen || !setupCtrl.validFen()
         ? null
         : h(
             'span.preview',
@@ -40,8 +40,8 @@ export const fenInput = (ctrl: LobbyController) => {
                 insert: vnode => lichess.miniBoard.init(vnode.elm as HTMLElement),
                 update: vnode => lichess.miniBoard.init(vnode.elm as HTMLElement),
               },
-            })
-          )
+            }),
+          ),
     ),
   ]);
 };

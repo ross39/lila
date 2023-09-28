@@ -2,7 +2,7 @@ import { view as cevalView } from 'ceval';
 import { parseFen } from 'chessops/fen';
 import { defined } from 'common';
 import * as licon from 'common/licon';
-import { bind, bindNonPassive, MaybeVNode, onInsert, dataIcon, iconTag } from 'common/snabbdom';
+import { bind, bindNonPassive, MaybeVNode, onInsert, dataIcon } from 'common/snabbdom';
 import { bindMobileMousedown, isMobile } from 'common/mobile';
 import { playable } from 'game';
 import * as router from 'game/router';
@@ -11,7 +11,7 @@ import statusView from 'game/view/status';
 import { h, VNode, VNodeChildren } from 'snabbdom';
 import { path as treePath } from 'tree';
 import { render as trainingView } from './roundTraining';
-import { studyButton, view as actionMenu } from './actionMenu';
+import { view as actionMenu } from './actionMenu';
 import renderClocks from './clocks';
 import * as control from '../control';
 import crazyView from '../crazy/crazyView';
@@ -148,7 +148,7 @@ function inputs(ctrl: AnalyseCtrl): VNode | undefined {
                   if (pgn !== pgnExport.renderFullTxt(ctrl)) ctrl.changePgn(pgn, true);
                 }),
               },
-              ctrl.trans.noarg('importPgn')
+              ctrl.trans.noarg('importPgn'),
             ),
       ]),
     ]),
@@ -174,11 +174,7 @@ function controls(ctrl: AnalyseCtrl) {
           else if (action === 'menu') ctrl.actionMenu.toggle();
           else if (action === 'analysis' && ctrl.studyPractice)
             window.open(ctrl.studyPractice.analysisUrl(), '_blank', 'noopener');
-          else if (action === 'persistence') {
-            ctrl.persistence?.autoOpen(false);
-            ctrl.togglePersistence();
-          }
-        }, ctrl.redraw)
+        }, ctrl.redraw),
       ),
     },
     [
@@ -219,20 +215,7 @@ function controls(ctrl: AnalyseCtrl) {
                     },
                   })
                 : null,
-              ctrl.persistence
-                ? h('button.fbt.persistence', {
-                    attrs: {
-                      title: noarg('savingMoves'),
-                      'data-act': 'persistence',
-                      'data-icon': licon.ScreenDesktop,
-                    },
-                    class: {
-                      hidden: menuIsOpen || !!ctrl.retro,
-                      active: ctrl.persistence.open(),
-                    },
-                  })
-                : null,
-            ]
+            ],
       ),
       h('div.jumps', [
         jumpButton(licon.JumpFirst, 'first', canJumpPrev),
@@ -250,7 +233,7 @@ function controls(ctrl: AnalyseCtrl) {
               'data-icon': licon.Hamburger,
             },
           }),
-    ]
+    ],
   );
 }
 
@@ -277,7 +260,7 @@ const analysisDisabled = (ctrl: AnalyseCtrl): MaybeVNode =>
             hook: bind('click', ctrl.toggleComputer, ctrl.redraw),
             attrs: { type: 'button' },
           },
-          ctrl.trans.noarg('enable')
+          ctrl.trans.noarg('enable'),
         ),
       ])
     : undefined;
@@ -292,7 +275,7 @@ export const renderMaterialDiffs = (ctrl: AnalyseCtrl): [VNode, VNode] =>
     ctrl.node.fen,
     !!(ctrl.data.player.checks || ctrl.data.opponent.checks), // showChecks
     ctrl.nodeList,
-    ctrl.node.ply
+    ctrl.node.ply,
   );
 
 function renderPlayerStrips(ctrl: AnalyseCtrl): [VNode, VNode] | undefined {
@@ -423,7 +406,7 @@ export default function (deps?: typeof studyDeps) {
                         if (e.deltaY > 0 && scroll) control.next(ctrl);
                         else if (e.deltaY < 0 && scroll) control.prev(ctrl);
                         ctrl.redraw();
-                      })
+                      }),
                     ),
             },
             [
@@ -432,7 +415,7 @@ export default function (deps?: typeof studyDeps) {
               chessground.render(ctrl),
               playerBars ? playerBars[ctrl.bottomIsWhite() ? 0 : 1] : null,
               ctrl.promotion.view(ctrl.data.game.variant.key === 'antichess'),
-            ]
+            ],
           ),
         gaugeOn && !tour ? cevalView.renderGauge(ctrl) : null,
         menuIsOpen || tour ? null : crazyView(ctrl, ctrl.topColor(), 'top'),
@@ -447,7 +430,7 @@ export default function (deps?: typeof studyDeps) {
                       showCevalPvs ? cevalView.renderPvs(ctrl) : null,
                       renderAnalyse(ctrl, concealOf),
                       gamebookEditView || forkView(ctrl, concealOf),
-                      retroView(ctrl) || practiceView(ctrl) || explorerView(ctrl) || renderPersistence(ctrl),
+                      retroView(ctrl) || practiceView(ctrl) || explorerView(ctrl),
                     ]),
               ])),
         menuIsOpen || tour ? null : crazyView(ctrl, ctrl.bottomColor(), 'bottom'),
@@ -462,7 +445,7 @@ export default function (deps?: typeof studyDeps) {
                     ? undefined
                     : onInsert(elm => serverSideUnderboard(elm, ctrl)),
               },
-              study ? deps?.studyView.underboard(ctrl) : [inputs(ctrl)]
+              study ? deps?.studyView.underboard(ctrl) : [inputs(ctrl)],
             ),
         tour ? null : trainingView(ctrl),
         ctrl.studyPractice
@@ -492,45 +475,17 @@ export default function (deps?: typeof studyDeps) {
                                 'data-icon': licon.Back,
                               },
                             },
-                            ctrl.trans.noarg('backToGame')
-                          )
+                            ctrl.trans.noarg('backToGame'),
+                          ),
                         )
                       : null,
-                  ]
+                  ],
             ),
         study && study.relay && deps?.relayManager(study.relay),
         h('div.chat__members.none', {
           hook: onInsert(lichess.watchers),
         }),
-      ]
+      ],
     );
   };
-}
-
-function renderPersistence(ctrl: AnalyseCtrl): VNode | undefined {
-  if (!ctrl.persistence?.open()) return;
-  const noarg = ctrl.trans.noarg;
-
-  return h('div.analyse__persistence.sub-box', [
-    h('div.title', noarg('savingMoves')),
-    h('p.analyse__persistence__help', [
-      iconTag(licon.InfoCircle),
-      noarg('savingMovesHelp'),
-      ctrl.ongoing ? null : ' ' + noarg('makeAStudy'),
-    ]),
-    h('div.analyse__persistence__actions', [
-      studyButton(ctrl),
-      h(
-        'button.button.button-empty.button-red',
-        {
-          attrs: {
-            title: noarg('clearSavedMoves'),
-            'data-icon': licon.Trash,
-          },
-          hook: bind('click', ctrl.persistence.clear),
-        },
-        noarg('clearSavedMoves')
-      ),
-    ]),
-  ]);
 }

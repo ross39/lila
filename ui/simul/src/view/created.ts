@@ -5,7 +5,7 @@ import SimulCtrl from '../ctrl';
 import { Applicant } from '../interfaces';
 import xhr from '../xhr';
 import * as util from './util';
-import modal from 'common/modal';
+import { domDialog } from 'common/dialog';
 
 export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
   return (ctrl: SimulCtrl) => {
@@ -38,7 +38,7 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                   {
                     hook: bind('click', () => xhr.withdraw(ctrl.data.id)),
                   },
-                  ctrl.trans('withdraw')
+                  ctrl.trans('withdraw'),
                 )
               : h(
                   'a.button.text' + (canJoin ? '' : '.disabled'),
@@ -51,21 +51,16 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                       ? bind('click', () => {
                           if (ctrl.data.variants.length === 1)
                             xhr.join(ctrl.data.id, ctrl.data.variants[0].key);
-                          else {
-                            modal({
-                              content: $('.simul .continue-with'),
-                              onInsert($wrap) {
-                                $wrap.find('button').on('click', function (this: HTMLElement) {
-                                  modal.close();
-                                  xhr.join(ctrl.data.id, $(this).data('variant'));
-                                });
-                              },
+                          else
+                            domDialog({
+                              show: 'modal',
+                              cash: $('.simul .continue-with'),
+                              onClose: dlg => xhr.join(ctrl.data.id, $(dlg.view).data('variant')),
                             });
-                          }
                         })
                       : {},
                   },
-                  ctrl.trans('join')
+                  ctrl.trans('join'),
                 )
             : h(
                 'a.button.text',
@@ -75,8 +70,8 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                     href: '/login?referrer=' + window.location.pathname,
                   },
                 },
-                ctrl.trans('signIn')
-              )
+                ctrl.trans('signIn'),
+              ),
         ),
       ]),
       showText(ctrl),
@@ -108,9 +103,9 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                     {
                       attrs: { colspan: 3 },
                     },
-                    [h('strong', candidates.length), ' candidate players']
-                  )
-                )
+                    [h('strong', candidates.length), ' candidate players'],
+                  ),
+                ),
               ),
               h(
                 'tbody',
@@ -138,13 +133,13 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                                 hook: bind('click', () => xhr.accept(applicant.player.id)(ctrl.data.id)),
                               }),
                             ]
-                          : []
+                          : [],
                       ),
-                    ]
+                    ],
                   );
-                })
-              )
-            )
+                }),
+              ),
+            ),
           ),
           h('div.half.accepted', [
             h(
@@ -157,8 +152,8 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                     {
                       attrs: { colspan: 3 },
                     },
-                    [h('strong', accepted.length), ' accepted players']
-                  )
+                    [h('strong', accepted.length), ' accepted players'],
+                  ),
                 ),
                 isHost && candidates.length && !accepted.length
                   ? [h('tr.help', h('th', 'Now you get to accept some players, then start the simul'))]
@@ -189,15 +184,15 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                                 hook: bind('click', () => xhr.reject(applicant.player.id)(ctrl.data.id)),
                               }),
                             ]
-                          : []
+                          : [],
                       ),
-                    ]
+                    ],
                   );
-                })
-              )
+                }),
+              ),
             ),
           ]),
-        ]
+        ],
       ),
       ctrl.data.quote
         ? h('blockquote.pull-quote', [h('p', ctrl.data.quote.text), h('footer', ctrl.data.quote.author)])
@@ -212,9 +207,9 @@ export default function (showText: (ctrl: SimulCtrl) => MaybeVNode) {
                 'data-variant': variant.key,
               },
             },
-            variant.name
-          )
-        )
+            variant.name,
+          ),
+        ),
       ),
     ];
   };
@@ -236,7 +231,7 @@ const randomButton = (ctrl: SimulCtrl) =>
             xhr.accept(randomCandidate.player.id)(ctrl.data.id);
           }),
         },
-        'Accept random candidate'
+        'Accept random candidate',
       )
     : null;
 
@@ -250,7 +245,7 @@ const startOrCancel = (ctrl: SimulCtrl, accepted: Applicant[]) =>
           },
           hook: bind('click', () => xhr.start(ctrl.data.id)),
         },
-        `Start (${accepted.length})`
+        `Start (${accepted.length})`,
       )
     : h(
         'a.button.button-red.text',
@@ -262,5 +257,5 @@ const startOrCancel = (ctrl: SimulCtrl, accepted: Applicant[]) =>
             if (confirm('Delete this simul?')) xhr.abort(ctrl.data.id);
           }),
         },
-        ctrl.trans('cancel')
+        ctrl.trans('cancel'),
       );

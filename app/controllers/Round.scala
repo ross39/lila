@@ -210,7 +210,7 @@ final class Round(
           .some
       (game.tournamentId, game.simulId, game.swissId) match
         case (Some(tid), _, _) =>
-          val hasChat = ctx.isAuth && tour.fold(true)(tournamentC.canHaveChat(_, none))
+          val hasChat = ctx.isAuth && tour.forall(tournamentC.canHaveChat(_, none))
           hasChat so env.chat.api.userChat.cached
             .findMine(ChatId(tid))
             .dmap(toEventChat(s"tournament/$tid"))
@@ -305,4 +305,4 @@ final class Round(
   }
 
   def help = Open:
-    Ok.page(html.site.helpModal.round)
+    Ok.page(html.site.help.round)

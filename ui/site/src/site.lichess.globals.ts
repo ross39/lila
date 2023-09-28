@@ -28,10 +28,13 @@ import * as miniBoard from 'common/mini-board';
 import * as miniGame from './component/mini-game';
 import { format as timeago, formatter as dateFormat } from './component/timeago';
 import watchers from './component/watchers';
+import { Chessground } from 'chessground';
+
+declare const __debug__: boolean;
 
 export default () => {
-  window.un$ = <T>(cash: Cash) => cash[0] as T;
   const l = window.lichess;
+  l.debug = __debug__;
   l.StrongSocket = StrongSocket;
   l.mousetrap = new Mousetrap(document);
   l.requestIdleCallback = requestIdleCallback;
@@ -68,4 +71,5 @@ export default () => {
   l.contentLoaded = (parent?: HTMLElement) => pubsub.emit('content-loaded', parent);
   l.blindMode = document.body.classList.contains('blind-mode');
   l.makeChat = data => lichess.loadEsm('chat', { init: { el: document.querySelector('.mchat')!, ...data } });
+  l.makeChessground = Chessground;
 };
