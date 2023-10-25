@@ -2,8 +2,6 @@ import { h, VNode } from 'snabbdom';
 import { Controller } from '../interfaces';
 import { puzzleBox, renderDifficultyForm, userBox } from '../view/side';
 import theme from '../view/theme';
-
-
 import {
   arrowKeyHandler,
   boardCommandsHandler,
