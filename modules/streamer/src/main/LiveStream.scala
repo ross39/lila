@@ -1,6 +1,8 @@
 package lila.streamer
 import lila.i18n.Language
 import lila.memo.CacheApi.*
+import play.api.i18n.Lang
+import java.time.Instant
 
 case class LiveStreams(streams: List[Stream]):
 
@@ -62,40 +64,43 @@ final class LiveStreamApi(
   }
   private var userIdsCache = Set.empty[UserId]
 
-  def all: Fu[LiveStreams] = cache.getUnit
-  // def all: Fu[LiveStreams] =
-  //   fuccess(
-  //     LiveStreams(
-  //       List(
-  //         Stream.Twitch.Stream(
-  //           "thibault",
-  //           "[RU] test stream on lichess.org",
-  //           Streamer(
-  //             _id = Streamer.Id("thibault"),
-  //             listed = Streamer.Listed(true),
-  //             approval = Streamer.Approval(
-  //               requested = false,
-  //               granted = true,
-  //               ignored = false,
-  //               tier = 5,
-  //               chatEnabled = true,
-  //               lastGrantedAt = nowInstant.some
-  //             ),
-  //             picturePath = none,
-  //             name = Streamer.Name("thibault"),
-  //             headline = none,
-  //             description = none,
-  //             twitch = none,
-  //             youTube = none,
-  //             seenAt = nowInstant,      // last seen online
-  //             liveAt = nowInstant.some, // last seen streaming
-  //             createdAt = nowInstant,
-  //             updatedAt = nowInstant
-  //           )
-  //         )
-  //       )
-  //     )
-  //   )
+  // def all: Fu[LiveStreams] = cache.getUnit
+  def all: Fu[LiveStreams] =
+    fuccess(
+      LiveStreams(
+        List(
+          Stream.Twitch.Stream(
+            "ross067",
+            Html("test test"),
+            Streamer(
+              _id = Streamer.Id("ross067"),
+              listed = Streamer.Listed(true),
+              approval = Streamer.Approval(
+                requested = true,
+                granted = true,
+                ignored = false,
+                tier = 5,
+                chatEnabled = true,
+                lastGrantedAt = Some(Instant.now())
+              ),
+              picture = None,
+              name = Streamer.Name("Ross067"),
+              headline = Some(Streamer.Headline("test headline")),
+              description = Some(Streamer.Description("test description")),
+              twitch = Some(Streamer.Twitch("test twitch")),
+              youTube = None,
+              seenAt = Instant.now(),
+              liveAt = Some(Instant.now()),
+              createdAt = Instant.now(),
+              updatedAt = Instant.now(),
+              lastStreamLang = Some(Language(Lang("en-GB"))),
+              closedCaption = Some(true)
+            ),
+            lang = Lang("en-GB")
+          )
+        )
+      )
+    )
 
   def of(s: Streamer.WithContext): Fu[Streamer.WithUserAndStream] = all.map: live =>
     Streamer.WithUserAndStream(s.streamer, s.user, live.get(s.streamer), s.subscribed)

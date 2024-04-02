@@ -20,7 +20,8 @@ case class Streamer(
     liveAt: Option[Instant], // last seen streaming
     createdAt: Instant,
     updatedAt: Instant,
-    lastStreamLang: Option[Language]
+    lastStreamLang: Option[Language],
+    closedCaption: Option[Boolean]
 ):
 
   inline def id = _id
@@ -63,7 +64,8 @@ object Streamer:
       liveAt = none,
       createdAt = nowInstant,
       updatedAt = nowInstant,
-      lastStreamLang = none
+      lastStreamLang = none,
+      closedCaption = some(false)
     )
 
   opaque type Id = String

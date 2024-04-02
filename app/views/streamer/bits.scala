@@ -106,12 +106,15 @@ object bits:
         li(perk4())
       )
     )
-
+//TODO: Modify the following to display the CC logo for closed captions
   def streamerTitle(s: lila.streamer.Streamer.WithContext) =
     span(cls := "streamer-title")(
       h1(dataIcon := licon.Mic)(titleTag(s.user.title), s.streamer.name),
       s.streamer.lastStreamLang.map: language =>
-        span(cls := "streamer-lang")(LangList.nameByLanguage(language))
+        span(cls := "streamer-lang")(
+          LangList.nameByLanguage(language),
+          s.streamer.closedCaption.collect { case true => span(cls := "streamer-cc")(dataIcon := licon.Cc) }
+        )
     )
 
   def subscribeButtonFor(s: lila.streamer.Streamer.WithContext)(using ctx: PageContext): Option[Tag] =
