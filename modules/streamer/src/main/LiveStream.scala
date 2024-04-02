@@ -1,5 +1,5 @@
 package lila.streamer
-import lila.i18n.Language
+import lila.core.i18n.Language
 import lila.memo.CacheApi.*
 import play.api.i18n.Lang
 import java.time.Instant
